@@ -97,6 +97,11 @@ class TestAPI(unittest.TestCase):
         self.assertIsInstance(history3, dict)
         self.assertIn('error', history3)
 
+        # Wrong time range
+        history4 = self.api.history(date2, date1, target='XXX')
+        self.assertIsInstance(history4, dict)
+        self.assertIn('error', history4)
+
     def test_exchange(self):
         base = 'USD'
         target = 'EUR'
