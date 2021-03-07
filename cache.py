@@ -2,7 +2,7 @@ import threading
 import time
 
 class Cache:
-    def __init__(self, max_time=10):
+    def __init__(self, max_time=600):
         self.lock = threading.Lock()
         self.max_time = max_time
         self.data = {}
