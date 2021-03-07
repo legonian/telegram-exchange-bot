@@ -45,13 +45,18 @@ class App:
         return None, None, None
 
     def start(self, update, context):
-        update.message.reply_text(
-            'Use /list to get list of latest exchange rates')
+        usage = ('Use /list to get list of latest exchange rates '
+                 'or specify custom currency with /list <valid currency>\n\n'
+                 'Also you can use /history and /exchange '
+                 'command and specifying arguments, click on command to know '
+                 'how to use them')
+        update.message.reply_text(usage)
 
     def latest(self, update, context):
         """Get list of all available exchange rates."""
         chat_id = update.message.chat_id
-        usage = 'Usage: /list\nor\n/list <valid currency>'
+        usage = ('Usage: /list\nor\n/list <valid currency>'
+                 'Example:\n/exchange 10 EUR to USD\nor\n/exchange 10$ to EUR')
         try:
             base = self._parse_latest(context.args)
 
@@ -69,8 +74,12 @@ class App:
             res = f'List of all available rates for {base}:\n'
             for currency in rates:
                 res += f'{currency}: {rates[currency]}\n'
-            res += f'\nSourse:\n{api.BASE_URL}/latest?base={base}'
-
+            if base is None:
+                res += f'\nSourse:\n{api.BASE_URL}/latest?base={api.base}\n\n'
+                res += f'Default currency is {api.base}, to use custom one:\n'
+                res += '/list <valid currency code>'
+            else:
+                res += f'\nSourse:\n{api.BASE_URL}/latest?base={base}'
             update.message.reply_text(res)
 
         except (IndexError, ValueError):
