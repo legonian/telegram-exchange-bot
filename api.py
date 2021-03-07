@@ -1,10 +1,10 @@
 import requests
 import json
 import decimal
-import io
 from datetime import datetime, timedelta
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
+
+from plotter import Plotter
+
 
 class ExchangeRatesAPI:
     BASE_URL = 'https://api.exchangeratesapi.io'
@@ -32,6 +32,7 @@ class ExchangeRatesAPI:
         self.base = base
         rates = self.latest()['rates']
         self.currencies = [cur for cur in rates]
+        self.plotter = Plotter()
 
     def _datetime_to_valid_str(self, date1):
         """
@@ -190,6 +191,7 @@ class ExchangeRatesAPI:
         start = end - timedelta(days=days)
         rates = self.history(start, end, base=cur_from, target=cur_to)['rates']
         rates = dict(sorted(rates.items()))
+
         if 'error' in rates:
             return None
         date, rate = [], []
@@ -197,21 +199,8 @@ class ExchangeRatesAPI:
             date.append(datetime.strptime(r, '%Y-%m-%d'))
             rate.append(rates[r][cur_to])
         
-        plt.plot(date, rate, 'k')
-
-        ax = plt.gca()
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-        ax.grid(axis='y')
-        ax.set_ylabel('{} to {} rates'.format(cur_from, cur_to))
-
-        fig = plt.gcf()
-        fig.autofmt_xdate()
-
-        buf = io.BytesIO()
-        fig.savefig(buf)
-        buf.seek(0)
-
-        return buf
+        y_label = '{} to {} rates'.format(cur_from, cur_to)
+        return self.plotter.plot_rates(date, rate, y_label)
 
     def exchange(self, amount, cur_from, cur_to):
         """
