@@ -80,6 +80,7 @@ class TestAPI(unittest.TestCase):
     def test_history(self):
         date1 = datetime(2020, 1, 30)
         date2 = datetime(2021, 1, 30)
+        date3 = datetime(2021, 1, 29)
 
         # Not include target or targets
         history1 = self.api.history(date1, date2)
@@ -99,6 +100,11 @@ class TestAPI(unittest.TestCase):
 
         # Wrong time range
         history4 = self.api.history(date2, date1, target='XXX')
+        self.assertIsInstance(history4, dict)
+        self.assertIn('error', history4)
+
+        # Same day
+        history4 = self.api.history(date2, date2, target='EUR')
         self.assertIsInstance(history4, dict)
         self.assertIn('error', history4)
 
