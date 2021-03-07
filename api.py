@@ -203,11 +203,13 @@ class ExchangeRatesAPI:
 
         cur_from = self._validate_targets(cur_from)
         cur_to = self._validate_targets(cur_to)
+        
         if any(arg is None for arg in [cur_from, cur_to]):
             return None
 
-        if not isinstance(days, int):
+        if not isinstance(days, int) or days < 1:
             return None
+        
         end = datetime.now()
         start = end - timedelta(days=days)
 
@@ -217,6 +219,9 @@ class ExchangeRatesAPI:
             return None
 
         rates = history_data['rates']
+        if len(res['rates']) < 2:
+            return None
+
         rates = dict(sorted(rates.items()))
         
         date, rate = [], []
