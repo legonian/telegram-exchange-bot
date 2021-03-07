@@ -63,10 +63,10 @@ class ExchangeRatesAPI:
             return self.base
         elif not isinstance(base, str):
             return None
-        elif base not in self.currencies:
+        elif base.upper() not in self.currencies:
             return None
 
-        return base
+        return base.upper()
     
     def _validate_timestamps(self, start, end):
         """
@@ -96,14 +96,19 @@ class ExchangeRatesAPI:
         Returns:
             (str): validated target or targets
         """
-        if target is None and isinstance(targets, list):
+        if (target is None) and isinstance(targets, list):
             if len(targets) == 0:
+                return None
+            targets = ','.join([self._validate_targets(t)for t in targets])
+            
+            if any(t is None for t in targets):
                 return None
             targets = ','.join(targets)
         else:
-            if not isinstance(target, str):
+            if ((not isinstance(target, str)) and
+                    (target.upper() not in self.currencies)):
                 return None
-            targets = target
+            targets = target.upper()
         return targets
 
     def _validate_exchange(self, amount, cur_from, cur_to):
@@ -176,7 +181,10 @@ class ExchangeRatesAPI:
         query = query.format(start, end, base, targets)
 
         res = self._request(api_path, query)
-        if len(res['rates']) == 0:
+        if 'error' in res:
+            return res
+        
+        if ('rates' in res) and (len(res['rates']) == 0):
             return {'error': 'No exchange rate is available this period.'}
         
         return res
@@ -192,15 +200,25 @@ class ExchangeRatesAPI:
         Returns:
             (bytes): image
         """
+
+        cur_from = self._validate_targets(cur_from)
+        cur_to = self._validate_targets(cur_to)
+        if any(arg is None for arg in [cur_from, cur_to]):
+            return None
+
         if not isinstance(days, int):
             return None
         end = datetime.now()
         start = end - timedelta(days=days)
-        rates = self.history(start, end, base=cur_from, target=cur_to)['rates']
-        rates = dict(sorted(rates.items()))
 
-        if 'error' in rates:
+        history_data = self.history(start, end, base=cur_from, target=cur_to)
+        if 'error' in history_data:
+            print(history_data['error'])
             return None
+
+        rates = history_data['rates']
+        rates = dict(sorted(rates.items()))
+        
         date, rate = [], []
         for r in rates:
             date.append(datetime.strptime(r, '%Y-%m-%d'))
