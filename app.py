@@ -2,10 +2,8 @@ import logging
 import os
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
-import decimal
 
 from api import ExchangeRatesAPI
-from cache import Cache
 
 
 logging.basicConfig(level=logging.DEBUG,
@@ -13,30 +11,61 @@ logging.basicConfig(level=logging.DEBUG,
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-api = ExchangeRatesAPI()
-cache = Cache()
 
 class App:
+    CURRENCY_MAP = {
+        "GBP": "£",
+        "CNY": "¥",
+        "EUR": "€",
+        "JPY": "¥",
+        "PLN": "zł",
+        "RUB": "₽",
+        "USD": "$",
+    }
+
+    def __init__(self):
+        self.api = ExchangeRatesAPI()
+    
     def _parse_latest(self, args):
         if len(args) == 1:
             return args[0]
         else:
             return None
     
+    def _parse_money(self, str1):
+        """
+        Args:
+            param1 (obj): self
+            param2 (str): string to parse
+
+        Returns:
+            (str): parsed number
+            (str): parsed currency
+        """
+        for cur in self.CURRENCY_MAP:
+            if self.CURRENCY_MAP[cur] in str1:
+                parsed = str1.replace(self.CURRENCY_MAP[cur], '')
+                return parsed, cur
+        return None, None
+
     def _parse_exchange(self, args):
-        if len(args) == 3:
-            amount, cur_from = api.parse_money(args[0])
-            return amount, cur_from, args[2]
-        elif len(args) == 4:
+        if len(args) == 3 and args[1].lower() == 'to':
+            money_str = args[0]
+            for cur in self.CURRENCY_MAP:
+                if self.CURRENCY_MAP[cur] in money_str:
+                    parsed = money_str.replace(self.CURRENCY_MAP[cur], '')
+                    return parsed, cur, args[2]
+                    
+        elif len(args) == 4 and args[2].lower() == 'to':
             if args[2].lower() == 'to':
                 return args[0], args[1], args[3]
         
         return None, None, None
 
     def _parse_history(self, args):
-        if len(args) == 4:
+        if len(args) == 4 and args[1].lower() == 'for':
             currencies = args[0].split('/')
-            if len(currencies) == 2 and args[2].isdigit():
+            if len(currencies) == 2 and args[2].isdigit() and args[3].lower() == 'days':
                 [cur_from, cur_to] = currencies
                 days = int(args[2])
 
@@ -60,26 +89,22 @@ class App:
         try:
             base = self._parse_latest(context.args)
 
-            # Check cache and request new data is cache empty or expired
-            cached_rates = cache.rates(base)
-            if cached_rates is None:
-                rates = api.latest(base=base)['rates']
-                if rates is None:
-                    update.message.reply_text(usage)
-                    return
-                cache.save_rates(rates, base)
-            else:
-                rates = cached_rates
+            rates = self.api.latest(base=base)
+            if (rates is None) or ('error' in rates) or (rates['rates'] is None):
+                update.message.reply_text(usage)
+                return
+            
+            rates = rates['rates']
             
             res = f'List of all available rates for {base}:\n'
             for currency in rates:
                 res += f'{currency}: {rates[currency]}\n'
             if base is None:
-                res += (f'\nSourse:\n{api.BASE_URL}/latest?base={api.base}\n\n'
-                        f'Default currency is {api.base}, to use custom one:\n'
+                res += (f'\nSourse:\n{self.api.BASE_URL}/latest?base={self.api.base}\n\n'
+                        f'Default currency is {self.api.base}, to use custom one:\n'
                         '/list <valid currency code> (like /list EUR)')
             else:
-                res += f'\nSourse:\n{api.BASE_URL}/latest?base={base}'
+                res += f'\nSourse:\n{self.api.BASE_URL}/latest?base={base}'
             update.message.reply_text(res)
 
         except (IndexError, ValueError):
@@ -97,7 +122,7 @@ class App:
                 update.message.reply_text(usage)
                 return
             
-            resp = api.exchange(amount, cur_from, cur_to)
+            resp = self.api.exchange(amount, cur_from, cur_to)
             if resp is None:
                 update.message.reply_text(usage)
                 return
@@ -118,7 +143,7 @@ class App:
                 update.message.reply_text(usage)
                 return
 
-            graph = api.plot_history(cur_from, cur_to, days)
+            graph = self.api.plot_history(cur_from, cur_to, days)
             if graph is None:
                 update.message.reply_text(usage)
                 return

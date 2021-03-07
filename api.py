@@ -4,23 +4,12 @@ import decimal
 from datetime import datetime, timedelta
 
 from plotter import Plotter
+from cache import Cache
 
 
 class ExchangeRatesAPI:
     BASE_URL = 'https://api.exchangeratesapi.io'
-
-    CURRENCY_SYMBOLS_MAP = {
-        "GBP": "£",
-        "CNY": "¥",
-        "EUR": "€",
-        "JPY": "¥",
-        "PLN": "zł",
-        "RUB": "₽",
-        "USD": "$",
-    }
-
     currencies = None
-    base = None
 
     def __init__(self, base='USD'):
         """Set base and supported currencies list.
@@ -29,10 +18,13 @@ class ExchangeRatesAPI:
             param1 (obj): self
             param2 (str): currency code
         """
+        self.cache = Cache()
+        self.plotter = Plotter()
+
         self.base = base
+
         rates = self.latest()['rates']
         self.currencies = [cur for cur in rates]
-        self.plotter = Plotter()
 
     def _datetime_to_valid_str(self, date1):
         """
@@ -135,17 +127,22 @@ class ExchangeRatesAPI:
             param2 (str): base currency
 
         Returns:
-            (obj): response
+            (dict): response
         """
         api_path='latest'
 
         base = self._validate_base(base)
         if base is None:
-            return None
+            return {'error': 'Invalid base currency'}
         
         query = 'base={}'.format(base)
 
-        data = self._request(api_path, query)
+        cached_data = self.cache.rates(base)
+        if cached_data is None:
+            data = self._request(api_path, query)
+            self.cache.save_rates(data, base)
+        else:
+            data = cached_data
 
         if 'error' not in data:
           for rate in data['rates']:
@@ -164,7 +161,7 @@ class ExchangeRatesAPI:
             param6 (list): list of multiple targets
 
         Returns:
-            (obj): response
+            (dict): response
         """
         api_path = 'history'
 
@@ -180,11 +177,21 @@ class ExchangeRatesAPI:
 
         res = self._request(api_path, query)
         if len(res['rates']) == 0:
-          return {'error': 'No exchange rate data is available for the selected currency.'}
+            return {'error': 'No exchange rate is available this period.'}
         
         return res
 
     def plot_history(self, cur_from, cur_to, days):
+        """
+        Args:
+            param1 (obj): self
+            param2 (str): base currency 
+            param3 (str): target currency
+            param4 (int): number of days
+
+        Returns:
+            (bytes): image
+        """
         if not isinstance(days, int):
             return None
         end = datetime.now()
@@ -226,19 +233,3 @@ class ExchangeRatesAPI:
         rate = decimal.Decimal(rates[cur_to])
 
         return f'{round(amount * rate, 2)} {cur_to}'
-
-    def parse_money(self, str1):
-        """
-        Args:
-            param1 (obj): self
-            param2 (str): string to parse
-
-        Returns:
-            (str): parsed number
-            (str): parsed currency
-        """
-        for cur in self.CURRENCY_SYMBOLS_MAP:
-            if self.CURRENCY_SYMBOLS_MAP[cur] in str1:
-                parsed = str1.replace(self.CURRENCY_SYMBOLS_MAP[cur], '')
-                return parsed, cur
-        return None, None
