@@ -219,7 +219,7 @@ class ExchangeRatesAPI:
             return None
 
         rates = history_data['rates']
-        if len(res['rates']) < 2:
+        if len(rates) < 2:
             return None
 
         rates = dict(sorted(rates.items()))
