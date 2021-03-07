@@ -56,7 +56,7 @@ class App:
         """Get list of all available exchange rates."""
         chat_id = update.message.chat_id
         usage = ('Usage: /list\nor\n/list <valid currency>'
-                 'Example:\n/exchange 10 EUR to USD\nor\n/exchange 10$ to EUR')
+                 'Example:\n/list\nor\n/list  EUR')
         try:
             base = self._parse_latest(context.args)
 
@@ -75,9 +75,9 @@ class App:
             for currency in rates:
                 res += f'{currency}: {rates[currency]}\n'
             if base is None:
-                res += f'\nSourse:\n{api.BASE_URL}/latest?base={api.base}\n\n'
-                res += f'Default currency is {api.base}, to use custom one:\n'
-                res += '/list <valid currency code>'
+                res += (f'\nSourse:\n{api.BASE_URL}/latest?base={api.base}\n\n'
+                        f'Default currency is {api.base}, to use custom one:\n'
+                        '/list <valid currency code> (like /list EUR)')
             else:
                 res += f'\nSourse:\n{api.BASE_URL}/latest?base={base}'
             update.message.reply_text(res)
@@ -88,9 +88,9 @@ class App:
     def exchange(self, update, context):
         """Get list of all available exchange rates."""
         chat_id = update.message.chat_id
-        usage = 'Usage:\n/exchange <number> <currency> to <currency>\nor\n'
-        usage += '/exchange <number with symbol> to <currency>\n\n'
-        usage += 'Example:\n/exchange 10 EUR to USD\nor\n/exchange 10$ to EUR'
+        usage = ('Usage:\n/exchange <number> <currency> to <currency>\nor\n'
+                 '/exchange <number with symbol> to <currency>\n\n'
+                 'Example:\n/exchange 10 EUR to USD\nor\n/exchange 10$ to EUR')
         try:
             amount, cur_from, cur_to = self._parse_exchange(context.args)
             if any(arg is None for arg in [amount, cur_from, cur_to]):
@@ -110,8 +110,8 @@ class App:
     def history(self, update, context):
         """Get list of all available exchange rates."""
         chat_id = update.message.chat_id
-        usage = 'Usage: /history <currency>/<currency> for <number> days\n\n'
-        usage += 'Example:\n/history USD/EUR for 7 days'
+        usage = ('Usage: /history <currency>/<currency> for <number> days\n\n'
+                 'Example:\n/history USD/EUR for 7 days')
         try:
             cur_from, cur_to, days = self._parse_history(context.args)
             if any(arg is None for arg in [cur_from, cur_to, days]):
