@@ -135,7 +135,8 @@ class App:
     def history(self, update, context):
         """Get list of all available exchange rates."""
         chat_id = update.message.chat_id
-        usage = ('Usage: /history <currency>/<currency> for <number> days\n\n'
+        usage = ('Usage: /history <currency>/<currency> for <number> days'
+                 '(recommended to use 7 or more days)\n\n'
                  'Example:\n/history USD/EUR for 7 days')
         try:
             cur_from, cur_to, days = self._parse_history(context.args)
