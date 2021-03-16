@@ -1,7 +1,7 @@
 # Exchange Telegram Bot
 
 Exchange Bot is Telegram bot written in Python. App using python-telegram-bot 
-Bot API framework and fetching data from api.exchangeratesapi.io.
+Bot API framework and fetching data from https://api.exchangeratesapi.io/.
 
 ## Features
 
