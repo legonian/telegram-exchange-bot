@@ -30,7 +30,7 @@ class App:
         if len(args) == 1:
             return args[0]
         else:
-            return None
+            return "USD"
     
     def _parse_money(self, str1):
         """
@@ -99,12 +99,8 @@ class App:
             res = f'List of all available rates for {base}:\n'
             for currency in rates:
                 res += f'{currency}: {rates[currency]}\n'
-            if base is None:
-                res += (f'\nSourse:\n{self.api.BASE_URL}/latest?base={self.api.base}\n\n'
-                        f'Default currency is {self.api.base}, to use custom one:\n'
-                        '/list <valid currency code> (like /list EUR)')
-            else:
-                res += f'\nSourse:\n{self.api.BASE_URL}/latest?base={base}'
+            res += f'\nSourse:\n{self.api.BASE_URL}/latest?base={base}'
+
             update.message.reply_text(res)
 
         except (IndexError, ValueError):
@@ -153,6 +149,11 @@ class App:
             update.message.reply_text(usage)
 
 def main():
+    if 'EXCHANGE_TELEGRAM_BOT' not in os.environ:
+        print('\n[Error] Environmental variable $EXCHANGE_TELEGRAM_BOT is not '
+              'set.\nSet it to your unique token which you can get by creating '
+              'a bot with BotFather in Telegram App.\n')
+        return
     app = App()
     token = os.environ['EXCHANGE_TELEGRAM_BOT']
     updater = Updater(token)
