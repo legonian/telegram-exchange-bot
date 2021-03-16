@@ -14,18 +14,19 @@ This bot using following tools/features:
 
 ## Demo
 
-Bot hosted by PythonAnywhere or Raspberry Pi and can be accessed in telegram by 
-``@simple_exchange_test_bot`` name or by link 
+The Bot is hosted by PythonAnywhere though it can be silent due to limitation 
+of free account of PythonAnywhere. You can try access bot in telegram by link 
 https://t.me/simple_exchange_test_bot.
 
 <img alt="Example" src="https://raw.githubusercontent.com/legonian/telegram-exchange-bot/main/example.png">
 
 ## Installation
 
-To run this bot app better to use Python 3.8 (also tested with Python 3.7.3 on 
-ARM). App requre ``EXCHANGE_TELEGRAM_BOT`` environment variable to be set to 
-your unique telegram bot token. To download, install python dependancies and run
-type following commands:
+To run the bot yourself it's recommended to use Python 3.8 version (but also 
+tested with Python 3.7.3 on ARM and it works). Bot requre 
+``EXCHANGE_TELEGRAM_BOT`` environment variable to be set to your unique 
+telegram bot token. To download, install python dependancies, and run bot type 
+following commands:
 ```
 $ git clone https://github.com/legonian/telegram-exchange-bot.git
 $ cd telegram-exchange-bot
